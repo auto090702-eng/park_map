@@ -16,6 +16,8 @@
   header h1{margin:0;font-size:18px;line-height:1.35}
   header p{margin:4px 0 0;font-size:14px;color:var(--sub);line-height:1.5}
   .row{display:flex;gap:8px;margin-top:8px;align-items:center}
+  header p.org{font-size:12px;margin-top:2px}
+  header p.org a,.card a{color:var(--green-d)}
   .help-btn{flex:none;font-size:15px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
   #map{flex:1;min-height:0;touch-action:none;background:#eef1ef}
   .locate{position:absolute;right:12px;bottom:calc(24px + env(safe-area-inset-bottom));z-index:1000;display:flex;align-items:center;gap:6px;
@@ -51,6 +53,8 @@
   .toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:1500;background:rgba(29,36,33,.92);color:#fff;
     font-size:14px;padding:8px 14px;border-radius:8px;display:none;max-width:90%;text-align:center}
 </style>
+<script>function nextPhoto(img){const l=(img.dataset.alt||'').split(',').filter(Boolean);if(!l.length){img.parentNode.style.display='none';return;}img.dataset.alt=l.slice(1).join(',');img.src=l[0];}
+</script>
 </head>
 <body>
 <div id="app">
@@ -60,6 +64,7 @@
       <button class="help-btn" id="openHelp">使い方</button>
     </div>
     <p>ご自宅から一番近い狭小公園の番号を押して、回答に進んでください。</p>
+    <p class="org">調査主体：<a href="https://sites.google.com/view/takumaru/home" target="_blank" rel="noopener">熊本大学　交通政策分析研究室</a></p>
   </header>
   <div class="wrap">
     <div id="map"></div>
@@ -71,8 +76,8 @@
       <div class="card">
         <h2>狭小公園とは？</h2>
         <p style="margin:0 0 10px">遊具やベンチなどがあまり置かれてないような小さな公園を指します。以下に熊本市における例を示しています。</p>
-        <figure><img src="photo1.jpg" alt="狭小公園の例1" onerror="this.parentNode.style.display='none'"><figcaption>例1）銭塘町六町公園</figcaption></figure>
-        <figure><img src="photo2.jpg" alt="狭小公園の例2" onerror="this.parentNode.style.display='none'"><figcaption>例2）城山半田三丁目公園</figcaption></figure>
+        <figure><img src="photo1.JPG" data-alt="photo1.jpg,photo1.jpeg,photo1.JPEG,photo1.png,photo1.PNG" alt="狭小公園の例1" onerror="nextPhoto(this)"><figcaption>例1）銭塘町六町公園</figcaption></figure>
+        <figure><img src="photo2.JPG" data-alt="photo2.jpg,photo2.jpeg,photo2.JPEG,photo2.png,photo2.PNG" alt="狭小公園の例2" onerror="nextPhoto(this)"><figcaption>例2）城山半田三丁目公園</figcaption></figure>
         <button id="toSteps">次へ</button>
       </div>
     </div>
@@ -84,6 +89,7 @@
           <li>「<b>この公園について回答する</b>」を押すと、アンケートが開きます。</li>
         </ol>
         <p class="small"><b>※個人情報の取り扱いについて</b><br>このアンケートは無記名です。お名前や住所、メールアドレスを取得することはありません。<br>いただいた回答は研究の目的以外には使用しません。個人が特定される形で公表することもありません。<br>地図を見たり操作したりしても、あなたの位置情報が記録されることはありません。<br>回答は任意です。答えたくない質問には、無理にお答えいただかなくて結構です。</p>
+        <p class="small">調査主体：<a href="https://sites.google.com/view/takumaru/home" target="_blank" rel="noopener">熊本大学　交通政策分析研究室</a></p>
         <button id="closeHelp">地図を見る</button>
       </div>
     </div>
