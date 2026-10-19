@@ -54,7 +54,9 @@
   .card .small{font-size:13px;color:var(--sub);border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
   .card button{width:100%;font-size:17px;font-weight:700;padding:12px;border:0;border-radius:10px;background:var(--green);color:#fff;margin-top:12px}
   .toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:1500;background:rgba(29,36,33,.92);color:#fff;
-    font-size:14px;padding:8px 14px;border-radius:8px;display:none;max-width:90%;text-align:center}
+    font-size:15px;padding:10px 12px 10px 16px;border-radius:10px;display:none;max-width:90%;align-items:center;gap:10px}
+  .toast.show{display:flex}
+  #toastX{flex:none;background:none;border:0;color:#fff;font-size:22px;line-height:1;padding:2px 6px;cursor:pointer}
 </style>
 <script>function nextPhoto(img){const l=(img.dataset.alt||'').split(',').filter(Boolean);if(!l.length){img.parentNode.style.display='none';return;}img.dataset.alt=l.slice(1).join(',');img.src=l[0];}
 </script>
@@ -63,7 +65,7 @@
 <div id="app">
   <header>
     <div class="row" style="margin-top:0">
-      <h1 style="flex:1">小さな公園の利用アンケート</h1>
+      <h1 style="flex:1">狭小公園の利用アンケート</h1>
       <button class="help-btn" id="openHelp">使い方</button>
     </div>
     <p>ご自宅から一番近い狭小公園の番号を押して、回答に進んでください。</p>
@@ -74,10 +76,10 @@
     <button class="locate" id="locate" aria-label="現在地を表示">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>現在地
     </button>
-    <div class="toast" id="toast"></div>
+    <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastX" aria-label="閉じる">×</button></div>
     <div id="about" class="overlay" role="dialog" aria-modal="true">
       <div class="card">
-        <h2>調査対象の公園について</h2>
+        <h2>狭小公園とは？</h2>
         <p style="margin:0 0 10px">遊具やベンチなどがあまり置かれてない小さな公園を対象としています。<br>例）</p>
         <figure><img src="photo1.JPG" data-alt="photo1.jpg,photo1.jpeg,photo1.JPEG,photo1.png,photo1.PNG" alt="狭小公園の例1" onerror="nextPhoto(this)"></figure>
         <figure><img src="photo2.JPG" data-alt="photo2.jpg,photo2.jpeg,photo2.JPEG,photo2.png,photo2.PNG" alt="狭小公園の例2" onerror="nextPhoto(this)"></figure>
@@ -88,7 +90,7 @@
       <div class="card">
         <h2>回答の手順</h2>
         <ol>
-          <li>ご自宅から一番近い小さな公園の番号を押してください。</li>
+          <li>ご自宅から一番近い狭小公園の番号を押してください。</li>
           <li>「<b>この公園について回答する</b>」を押すと、アンケートが開きます。</li>
         </ol>
         <button id="closeHelp">地図を見る</button>
@@ -139,25 +141,21 @@ map.on('zoomend',updateLabels);map.on('load',updateLabels);
 
 // current location
 const toast=document.getElementById('toast');
-function say(t,ms=3500){toast.textContent=t;toast.style.display='block';clearTimeout(say.t);say.t=setTimeout(()=>toast.style.display='none',ms);}
+function hideToast(){toast.classList.remove('show');clearTimeout(say.t);}
+function say(t,ms){document.getElementById('toastMsg').textContent=t;toast.classList.add('show');clearTimeout(say.t);if(ms)say.t=setTimeout(hideToast,ms);}
+document.getElementById('toastX').onclick=hideToast;
 let me=null;
 function showMe(p){
   const ll=[p.coords.longitude,p.coords.latitude];
   if(!me){const d=document.createElement('div');d.className='me';me=new mapboxgl.Marker({element:d}).setLngLat(ll).addTo(map);}else me.setLngLat(ll);
-  map.flyTo({center:ll,zoom:16});toast.style.display='none';
+  map.flyTo({center:ll,zoom:16});hideToast();
 }
-function geoFail(e){
-  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
-  if(e&&e.code===1){
-    say(ios?'位置情報がオフになっています。「設定」→「プライバシーとセキュリティ」→「位置情報サービス」→「Safari Webサイト」を「使用中のみ」にしてから、もう一度押してください。地図を動かしてご自宅を探すこともできます。'
-           :'位置情報が許可されていません。ブラウザの設定でこのページの位置情報を許可してから、もう一度押してください。地図を動かしてご自宅を探すこともできます。',9000);
-  }else{say('現在地を取得できませんでした。地図を動かしてご自宅を探してください。',6000);}
-}
+function geoFail(){say('位置情報がオフになっています');}
 document.getElementById('locate').addEventListener('click',()=>{
-  if(!navigator.geolocation||!window.isSecureContext){say('この画面では現在地を使えません。地図を動かしてご自宅を探してください。',6000);return;}
+  if(!navigator.geolocation||!window.isSecureContext){geoFail();return;}
   say('現在地を確認しています…',20000);
   navigator.geolocation.getCurrentPosition(showMe,e=>{
-    if(e.code===1){geoFail(e);return;}
+    if(e.code===1){geoFail();return;}
     navigator.geolocation.getCurrentPosition(showMe,geoFail,{enableHighAccuracy:true,timeout:15000,maximumAge:0});
   },{enableHighAccuracy:false,timeout:8000,maximumAge:300000});
 });
