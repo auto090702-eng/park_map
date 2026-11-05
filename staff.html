@@ -53,9 +53,8 @@
   .person.stale{opacity:.5}
   /* bottom sheet: about 1/4 of the screen, body scrolls */
   .sheet{position:absolute;left:0;right:0;bottom:0;z-index:1500;background:#fff;border-radius:14px 14px 0 0;box-shadow:0 -3px 16px rgba(0,0,0,.2);
-    height:26%;min-height:178px;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .2s,height .2s}
+    height:40%;min-height:220px;max-height:340px;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .2s}
   .sheet.show{transform:none}
-  .sheet.tall{height:62%}
   .sh-top{flex:none;padding:8px 12px 0}
   .sh-head{display:flex;align-items:center;gap:6px}
   .sh-head h2{margin:0;font-size:15px;flex:1;min-width:0;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -282,20 +281,40 @@ function fillSheet(force){
   $('shMeta').textContent=s.updatedAt?'最終更新：'+(s.updatedName||'不明')+'（'+fmtTime(s.updatedAt)+'）':'まだ記録がありません';
   $('shNav').href='https://www.google.com/maps/dir/?api=1&destination='+lat+','+lng;
 }
+// 公園＋配布範囲が入る範囲
+const areaBounds={};
+PARKS.forEach(([no,,lat,lng])=>{const b=new mapboxgl.LngLatBounds([lng,lat],[lng,lat]);
+  (AREAS[no]||[]).forEach(poly=>poly[0].forEach(c=>b.extend(c)));areaBounds[no]=b;});
+// パネルに隠れない位置（画面の上側）に公園と配布範囲を収める
+function focusPark(no){
+  const sh=$('sheet').offsetHeight,mh=$('map').clientHeight;
+  const pad={top:24,left:36,right:36,bottom:Math.min(sh+24,mh-80)};
+  map.fitBounds(areaBounds[no],{padding:pad,maxZoom:17,duration:500});
+}
 function openSheet(no){
   if(cur&&pins[cur])pins[cur].classList.remove('sel');
   cur=no;pins[no].classList.add('sel');fillSheet(true);
   $('sheet').classList.add('show');$('sheet').querySelector('.sh-body').scrollTop=0;
-  const p=parkOf(no),h=$('map').clientHeight;
-  map.easeTo({center:[p[3],p[2]],offset:[0,-h*0.13],zoom:Math.max(map.getZoom(),15)});
+  focusPark(no);
 }
-function closeSheet(){$('sheet').classList.remove('show','tall');if(cur&&pins[cur])pins[cur].classList.remove('sel');cur=null;
+function closeSheet(){$('sheet').classList.remove('show');if(cur&&pins[cur])pins[cur].classList.remove('sel');cur=null;
   if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();}
 $('shClose').onclick=closeSheet;
 map.on('click',closeSheet);
-// 入力中はキーボードに隠れないよう少し高くする
-$('sheet').addEventListener('focusin',e=>{if(e.target.matches('input'))$('sheet').classList.add('tall');});
-$('sheet').addEventListener('focusout',()=>setTimeout(()=>{if(!$('sheet').contains(document.activeElement))$('sheet').classList.remove('tall');},100));
+
+// キーボードの開閉に合わせてパネルを動かす。閉じたら元の高さに戻す
+let kbOpen=false;
+function fitSheet(){
+  const vv=window.visualViewport,el=$('sheet');if(!vv)return;
+  const kb=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
+  const open=kb>80;
+  if(open){el.style.bottom=kb+'px';el.style.height=Math.max(160,Math.min(300,vv.height*0.55))+'px';el.style.minHeight='0';}
+  else{el.style.bottom='';el.style.height='';el.style.minHeight='';}
+  if(kbOpen&&!open){const a=document.activeElement;if(a&&el.contains(a)&&a.blur)a.blur();window.scrollTo(0,0);}
+  kbOpen=open;
+}
+if(window.visualViewport){visualViewport.addEventListener('resize',fitSheet);visualViewport.addEventListener('scroll',fitSheet);}
+$('sheet').addEventListener('focusout',()=>setTimeout(fitSheet,150));
 
 /* ---- sync with Google Sheets (Apps Script) ---- */
 let online=false,setupErr=false;
